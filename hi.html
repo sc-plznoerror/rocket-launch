@@ -40,6 +40,7 @@
     <button data-angle="45">남서풍</button>
   </div>
   <button id="launchBtn">발사</button>
+  <button onclick="initiate()">초기화</button>
   <div id="stats">
     <div>최고 높이: <span id="maxHeight">0</span> m</div>
     <div>최종 거리: <span id="range">0</span> m</div>
@@ -396,7 +397,7 @@
         if (rocketBody.position.y <= 1 && !touchedGround && isMaxheight) {
           touchedGround = true;
           landed = true;
-          firstTouchPosition = rocketBody.position.clone();
+          firstTouchPosition = rocketMesh.position.clone();
           console.log("landed")
         }
 
@@ -496,6 +497,16 @@
       windSpeedInput.value = 5;
     });
   });
+
+  function initiate() {
+    speedInput.value = 30;
+    angleXYInput.value = 45;
+    angleZInput.value = 0;
+    massInput.value = 0.1;
+    areaInput.value = 0.01;
+    windDirInput.value = 0;
+    windSpeedInput.value = 0;
+  };
 
 })();
 </script>
