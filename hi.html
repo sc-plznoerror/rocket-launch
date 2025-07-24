@@ -2,12 +2,12 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<title>3D 로켓 시뮬레이션 - 1m 단위 축 표시</title>
+<title>에어로켓 발사 시뮬레이터</title>
 <style>
   body { margin: 0; overflow: hidden; background: #eef7ff; }
   #controls {
     position: fixed; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 6px;
-    font-family: Arial, sans-serif;
+    font-family: Arial, sans-serif, ;
     z-index: 10;
     max-width: 280px;
   }
@@ -22,11 +22,10 @@
 <body>
 
 <div id="controls">
+  <label>로켓1</label>
   <label>초기 속도 (m/s): <input type="number" id="speed" value="30" min="0" max="100" step="1" /></label>
-  <label>발사 각도 (도, XY 평면에서): <input type="number" id="angleXY" value="45" min="0" max="90" step="1" /></label>
-  <label>발사 각도 (도, 수평면 회전 Z축): <input type="number" id="angleZ" value="0" min="-180" max="180" step="1" /></label>
-  <label>질량 (kg): <input type="number" id="mass" value="0.1" min="0.01" max="10" step="0.01" /></label>
-  <label>단면적 (m²): <input type="number" id="area" value="0.01" min="0.001" max="1" step="0.001" /></label>
+  <label>발사 각도: <input type="number" id="angleXY" value="45" min="0" max="90" step="1" /></label>
+  <label>발사 방향: <input type="number" id="angleZ" value="0" min="-180" max="180" step="1" /></label>
   <label>풍속 (m/s): <input type="number" id="windSpeed" value="0" step="0.1" /></label>
   <label>풍향 (도): <input type="number" id="windDir" value="0" step="1" min="0" max="360" /></label>
   <div id="windButtons">
@@ -40,13 +39,17 @@
     <button data-angle="315">북서풍</button>
   </div>
   <button id="launchBtn">발사</button>
-  <button onclick="initiate()">초기화</button>
   <div id="stats">
     <div>최고 높이: <span id="maxHeight">0</span> m</div>
     <div>최종 거리: <span id="range">0</span> m</div>
   </div>
 </div>
-
+<div style="position: fixed; top: 10px; left: 320px; background: white; padding: 10px; border-radius: 6px;
+    font-family: Arial, sans-serif, ;
+    z-index: 10;
+    max-width: 280px;">
+  <label>로켓2</label>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
 <script src="./hi.js"></script>

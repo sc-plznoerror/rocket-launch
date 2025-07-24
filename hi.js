@@ -132,14 +132,14 @@
   const speedInput = document.getElementById('speed');
   const angleXYInput = document.getElementById('angleXY');
   const angleZInput = document.getElementById('angleZ');
-  const massInput = document.getElementById('mass');
-  const areaInput = document.getElementById('area');
   const launchBtn = document.getElementById('launchBtn');
   const maxHeightSpan = document.getElementById('maxHeight');
   const rangeSpan = document.getElementById('range');
 
   const Cd = 0.75;
   const rho = 1.225;
+  const area = 0.01
+  const mass = 0.1
 
   let maxHeight = 0;
   let launched = false;
@@ -162,8 +162,6 @@
       touchedGround = false;
     }
 
-    const mass = parseFloat(massInput.value);
-    const area = parseFloat(areaInput.value);
 
     const bodyHeight = 1.0;
     const bodyRadius = 0.15;
@@ -255,7 +253,6 @@
   function applyForces() {
     if (!rocketBody) return;
 
-    const area = parseFloat(areaInput.value);
     const windSpeed = parseFloat(windSpeedInput.value);
     const windDirDeg = parseFloat(windDirInput.value);
     if (isNaN(windSpeed) || isNaN(windDirDeg)) return;
@@ -392,7 +389,7 @@
 
           if (rocketMesh.position.distanceTo(originPosition) < 0.1) {
             rocketBody.type = CANNON.Body.DYNAMIC;
-            rocketBody.mass = parseFloat(massInput.value);
+            rocketBody.mass = mass;
             rocketBody.updateMassProperties();
 
             launched = false;
@@ -449,15 +446,4 @@
       windSpeedInput.value = 5;
     });
   });
-
-  function initiate() {
-    speedInput.value = 30;
-    angleXYInput.value = 45;
-    angleZInput.value = 0;
-    massInput.value = 0.1;
-    areaInput.value = 0.01;
-    windDirInput.value = 0;
-    windSpeedInput.value = 0;
-  };
-
 })();
