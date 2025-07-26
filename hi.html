@@ -23,12 +23,12 @@
 
 <div id="controls">
   <label>로켓1</label>
-  <label>초기 속도 (m/s): <input type="number" id="speed" value="30" min="0" max="100" step="1" /></label>
-  <label>발사 각도: <input type="number" id="angleXY" value="45" min="0" max="90" step="1" /></label>
-  <label>발사 방향: <input type="number" id="angleZ" value="0" min="-180" max="180" step="1" /></label>
-  <label>풍속 (m/s): <input type="number" id="windSpeed" value="0" step="0.1" /></label>
-  <label>풍향 (도): <input type="number" id="windDir" value="0" step="1" min="0" max="360" /></label>
-  <div id="windButtons">
+  <label>초기 속도 (m/s): <input type="number" id="speed1" value="30" min="0" max="100" step="1" /></label>
+  <label>발사 각도: <input type="number" id="angleXY1" value="45" min="0" max="90" step="1" /></label>
+  <label>발사 방향: <input type="number" id="angleZ1" value="0" min="-180" max="180" step="1" /></label>
+  <label>풍속 (m/s): <input type="number" id="windSpeed1" value="0" step="0.1" /></label>
+  <label>풍향 (도): <input type="number" id="windDir1" value="0" step="1" min="0" max="360" /></label>
+  <div id="windButtons1">
     <button data-angle="270">서풍</button>
     <button data-angle="90">동풍</button>
     <button data-angle="0">북풍</button>
@@ -39,16 +39,38 @@
     <button data-angle="315">북서풍</button>
   </div>
   <button id="launchBtn">발사</button>
-  <div id="stats">
-    <div>최고 높이: <span id="maxHeight">0</span> m</div>
-    <div>최종 거리: <span id="range">0</span> m</div>
+  <div id="stats1">
+    <div>최고 높이: <span id="maxHeight1">0</span> m</div>
+    <div>최종 거리: <span id="range1">0</span> m</div>
   </div>
 </div>
 <div style="position: fixed; top: 10px; left: 320px; background: white; padding: 10px; border-radius: 6px;
     font-family: Arial, sans-serif, ;
     z-index: 10;
     max-width: 280px;">
+<div>
   <label>로켓2</label>
+  <label>초기 속도 (m/s): <input type="number" id="speed2" value="30" min="0" max="100" step="1" /></label>
+  <label>발사 각도: <input type="number" id="angleXY2" value="45" min="0" max="90" step="1" /></label>
+  <label>발사 방향: <input type="number" id="angleZ2" value="0" min="-180" max="180" step="1" /></label>
+  <label>풍속 (m/s): <input type="number" id="windSpeed2" value="0" step="0.1" /></label>
+  <label>풍향 (도): <input type="number" id="windDir2" value="0" step="1" min="0" max="360" /></label>
+  <div id="windButtons2">
+    <button data-angle="270">서풍</button>
+    <button data-angle="90">동풍</button>
+    <button data-angle="0">북풍</button>
+    <button data-angle="180">남풍</button>
+    <button data-angle="135">남동풍</button>
+    <button data-angle="45">북동풍</button>
+    <button data-angle="225">남서풍</button>
+    <button data-angle="315">북서풍</button>
+  </div>
+  <button id="launchBtn2">발사</button>
+  <div id="stats2">
+    <div>최고 높이: <span id="maxHeight2">0</span> m</div>
+    <div>최종 거리: <span id="range2">0</span> m</div>
+  </div>
+</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>

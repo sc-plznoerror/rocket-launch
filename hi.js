@@ -129,17 +129,50 @@
   const trajectoryLine = new Line(trajectoryGeometry, trajectoryMaterial);
   scene.add(trajectoryLine);
 
-  const speedInput = document.getElementById('speed');
-  const angleXYInput = document.getElementById('angleXY');
-  const angleZInput = document.getElementById('angleZ');
+  const speedInput = document.getElementById('speed1');
+  const angleXYInput = document.getElementById('angleXY1');
+  const angleZInput = document.getElementById('angleZ1');
   const launchBtn = document.getElementById('launchBtn');
-  const maxHeightSpan = document.getElementById('maxHeight');
-  const rangeSpan = document.getElementById('range');
+  const maxHeightSpan = document.getElementById('maxHeight1');
+  const rangeSpan = document.getElementById('range1');
+
+  class rocket1 {
+    constructor(speed, angleXY, angleZ, launchBtn, maxHeightSpan, rangeSpan){
+      this.speed = speed
+      this.angleXY = angleXY
+      this.angleZ = angleZ
+      this.launchBtn = launchBtn
+      this.maxHeightSpan = maxHeightSpan
+      this.rangeSpan = rangeSpan
+    }
+    get vx() {
+      return this.velx()
+    }
+    velx() {
+      return this.speed * Math.cos(this.angleXY) * Math.cos(this.angleZ);
+    }
+    get vy() {
+      return this.vely()
+    }
+    vely() {
+      return this.speed * Math.sin(this.angleXY);
+    }
+    get vz() {
+      return this.velz()
+    }
+    velz() {
+      return this.speed * Math.cos(this.angleXY) * Math.sin(this.angleZ);
+    }
+  };
+
+  a = new rocket1(speedInput.value, angleXYInput.value, angleZInput.value, launchBtn, maxHeightSpan, rangeSpan)
+  
+  console.log(a.vx, a.vy, a.vz);
 
   const Cd = 0.75;
   const rho = 1.225;
-  const area = 0.01
-  const mass = 0.1
+  const area = 0.01;
+  const mass = 0.1;
 
   let maxHeight = 0;
   let launched = false;
@@ -250,6 +283,9 @@
     }
   }
 
+  const windDirInput = document.getElementById('windDir1');
+  const windSpeedInput = document.getElementById('windSpeed1')
+
   function applyForces() {
     if (!rocketBody) return;
 
@@ -310,23 +346,6 @@
         camera.position.lerp(desiredCamPos, 0.05);
         camera.lookAt(rocketMesh.position);
 
-        // 궤적 기록 및 그리기
-        if (trajectoryIndex < trajectoryMaxPoints) {
-          trajectoryPositions[trajectoryIndex * 3] = rocketBody.position.x;
-          trajectoryPositions[trajectoryIndex * 3 + 1] = rocketBody.position.y;
-          trajectoryPositions[trajectoryIndex * 3 + 2] = rocketBody.position.z;
-          trajectoryIndex++;
-          trajectoryGeometry.setDrawRange(1, trajectoryIndex);
-        } else {
-          for (let i = 0; i < (trajectoryMaxPoints - 1) * 3; i++) {
-            trajectoryPositions[i] = trajectoryPositions[i + 3];
-          }
-          trajectoryPositions[(trajectoryMaxPoints -1)*3] = rocketBody.position.x;
-          trajectoryPositions[(trajectoryMaxPoints -1)*3 +1] = rocketBody.position.y;
-          trajectoryPositions[(trajectoryMaxPoints -1)*3 +2] = rocketBody.position.z;
-        }
-        trajectoryGeometry.attributes.position.needsUpdate = true;
-
         // 최고 높이 갱신
         if (rocketBody.position.y > maxHeight) {
           maxHeight = rocketBody.position.y;
@@ -335,10 +354,12 @@
 
         else {
           isMaxheight = true;
+          console.log(rocketBody.position.y);
+          console.log("12");
         }
 
         // 땅 닿은 최초 위치 기록
-        if (rocketBody.position.y <= 1 && !touchedGround && isMaxheight) {
+        if (rocketBody.position.y <= 0.5 && !touchedGround && isMaxheight) {
           touchedGround = true;
           landed = true;
           firstTouchPosition = rocketMesh.position.clone();
@@ -346,12 +367,12 @@
           const markerGeometry = new THREE.SphereGeometry(0.2, 32); // 반지름 0.2, 세그먼트 32
           const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 빨간색
           const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-          marker.position.set(rocketBody.position.x, 0.5, rocketBody.position.z); // 원하는 위치로 설정
+          marker.position.set(rocketBody.position.x, 0.2, rocketBody.position.z); // 원하는 위치로 설정
           scene.add(marker);
         }
 
         // 착륙 감지: 땅(높이 0.2m) 닿으면 멈추고 고정
-        if (rocketBody.position.y <= 1 && landed && launched && isMaxheight) {
+        if (rocketBody.position.y <= 0.5 && landed && launched && isMaxheight) {
           landTime = performance.now();
 
           rocketBody.velocity.set(0, 0, 0);
@@ -438,9 +459,7 @@
 
   animate();
 
-  const windDirInput = document.getElementById('windDir');
-  const windSpeedInput = document.getElementById('windSpeed');
-  document.querySelectorAll('#windButtons button').forEach(btn => {
+  document.querySelectorAll('#windButtons1 button').forEach(btn => {
     btn.addEventListener('click', () => {
       windDirInput.value = btn.dataset.angle;
       windSpeedInput.value = 5;
