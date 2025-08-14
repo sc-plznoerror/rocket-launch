@@ -132,7 +132,7 @@
   const speedInput = document.getElementById('speed1');
   const angleXYInput = document.getElementById('angleXY1');
   const angleZInput = document.getElementById('angleZ1');
-  const launchBtn = document.getElementById('launchBtn');
+  const launchBtn = document.getElementById('launchBtn1');
   const maxHeightSpan = document.getElementById('maxHeight1');
   const rangeSpan = document.getElementById('range1');
 
@@ -166,8 +166,6 @@
   };
 
   a = new rocket1(speedInput.value, angleXYInput.value, angleZInput.value, launchBtn, maxHeightSpan, rangeSpan)
-  
-  console.log(a.vx, a.vy, a.vz);
 
   const Cd = 0.75;
   const rho = 1.225;
@@ -359,7 +357,7 @@
         }
 
         // 땅 닿은 최초 위치 기록
-        if (rocketBody.position.y <= 0.5 && !touchedGround && isMaxheight) {
+        if (rocketBody.position.y <= 1.3 && !touchedGround && isMaxheight) {
           touchedGround = true;
           landed = true;
           firstTouchPosition = rocketMesh.position.clone();
@@ -372,12 +370,12 @@
         }
 
         // 착륙 감지: 땅(높이 0.2m) 닿으면 멈추고 고정
-        if (rocketBody.position.y <= 0.5 && landed && launched && isMaxheight) {
+        if (rocketBody.position.y <= 1.3 && landed && launched && isMaxheight) {
           landTime = performance.now();
 
           rocketBody.velocity.set(0, 0, 0);
           rocketBody.angularVelocity.set(0, 0, 0);
-          rocketBody.position.y = 1; // 착륙 고정 높이 0.2m
+          rocketBody.position.y = 1.6; // 착륙 고정 높이 0.2m
           console.log("finished")
           rocketBody.type = CANNON.Body.KINEMATIC;
           rocketBody.updateMassProperties();
