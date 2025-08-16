@@ -133,6 +133,7 @@
   const angleXYInput = document.getElementById('angleXY2');
   const angleZInput = document.getElementById('angleZ2');
   const launchBtn = document.getElementById('launchBtn2');
+  const clearBtn = document.getElementById('clearBtn2');
   const maxHeightSpan = document.getElementById('maxHeight2');
   const rangeSpan = document.getElementById('range2');
 
@@ -324,18 +325,34 @@
     }
   }
 
-  const line = setInterval(() => {
-    if (!landed){
-      const markerGeometry = new THREE.SphereGeometry(0.1, 16);
-        const markerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+  const li = []
+  
+  function setMarker() {
+    const markerGeometry = new THREE.SphereGeometry(0.1, 16);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+    const arr = [];
+    const line = setInterval(() => {
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+      if (!landed){
         marker.position.set(rocketBody.position.x, rocketBody.position.y, rocketBody.position.z);
         scene.add(marker);
-    }
-    // if (landed) {
-    //   clearInterval(line);
-    // };
-  }, 10);
+
+        arr.push(marker);
+      };
+      if (landed) {
+        // scene.remove(marker);
+        // for(let i = 0; i < arr.length; i++){
+        //   scene.remove(arr[i]);
+        // }
+
+        li.push(arr);
+        console.log(1)
+        clearInterval(line);  
+      };
+    }, 10);
+  }
+  
+
 
   function animate() {
     requestAnimationFrame(animate);
@@ -448,7 +465,18 @@
     renderer.render(scene, camera);
   }
 
-  launchBtn.addEventListener('click', createRocket);
+  launchBtn.addEventListener('click', () => {
+    createRocket()
+    setMarker();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    for(let i = 0; i < li.length; i++){
+      for(let j = 0; j < li[i].length; j++){
+        scene.remove(li[i][j])
+      }
+    }
+  });
 
   angleXYInput.addEventListener('input', () => {
     if (!launched) setRocketInitialDirection();

@@ -1,5 +1,5 @@
 (() => {
-  const {
+    const {
     Scene, PerspectiveCamera, WebGLRenderer, Color, AmbientLight, DirectionalLight,
     Mesh, MeshPhongMaterial, CylinderGeometry, ConeGeometry, PlaneGeometry, AxesHelper,
     Group, BufferGeometry, Float32BufferAttribute, LineBasicMaterial, Line,
@@ -119,174 +119,252 @@
   let firstTouchPosition = null;
   let touchedGround = false;
 
-  const trajectoryMaxPoints = 200;
-  let trajectoryPositions = new Float32Array(trajectoryMaxPoints * 3);
-  let trajectoryIndex = 0;
-  const trajectoryGeometry = new BufferGeometry();
-  trajectoryGeometry.setAttribute('position', new Float32BufferAttribute(trajectoryPositions, 3));
-  trajectoryGeometry.setDrawRange(0, 0);
-  const trajectoryMaterial = new LineBasicMaterial({ color: 0x0000ff });
-  const trajectoryLine = new Line(trajectoryGeometry, trajectoryMaterial);
-  scene.add(trajectoryLine);
-
   const speedInput = document.getElementById('speed1');
   const angleXYInput = document.getElementById('angleXY1');
   const angleZInput = document.getElementById('angleZ1');
   const launchBtn = document.getElementById('launchBtn1');
+  const clearBtn = document.getElementById('clearBtn1');
   const maxHeightSpan = document.getElementById('maxHeight1');
   const rangeSpan = document.getElementById('range1');
-
-  class rocket1 {
-    constructor(speed, angleXY, angleZ, launchBtn, maxHeightSpan, rangeSpan){
-      this.speed = speed
-      this.angleXY = angleXY
-      this.angleZ = angleZ
-      this.launchBtn = launchBtn
-      this.maxHeightSpan = maxHeightSpan
-      this.rangeSpan = rangeSpan
+  let rocket = class{
+    constructor(speed, angleXY, angleZ, launchBtn, clearBtn){
+      this.speed = speed;
+      this.angleXY = angleXY;
+      this.angleZ = angleZ;
+      this.launchBtn = launchBtn;
+      this.clearBtn = clearBtn;
     }
-    get vx() {
-      return this.velx()
+    createRocket() {
+      if (rocketBody) {
+        world.removeBody(rocketBody);
+        scene.remove(rocketMesh);
+        rocketBody = null;
+        rocketMesh = null;
+  
+        trajectoryGeometry.setDrawRange(0, 0);
+        trajectoryIndex = 0;
+        firstTouchPosition = null;
+        touchedGround = false;
+      }
+  
+      const bodyHeight = 1.0;
+      const bodyRadius = 0.15;
+      const coneHeight = 0.4;
+      const coneRadius = bodyRadius;
+  
+      rocketBody = new CANNON.Body({
+        mass: mass,
+        linearDamping: 0,
+        angularDamping: 0,
+        type: CANNON.Body.DYNAMIC
+      });
+  
+      rocketBody.inertia.set(0.01, 0.02, 0.01);
+      rocketBody.invInertia.set(
+        1/rocketBody.inertia.x,
+        1/rocketBody.inertia.y,
+        1/rocketBody.inertia.z
+      );
+  
+      const cylinderShape = new CANNON.Cylinder(bodyRadius, bodyRadius, bodyHeight, 16);
+      const quat = new CANNON.Quaternion();
+      quat.setFromEuler(Math.PI / 2, 0, 0);
+      rocketBody.addShape(cylinderShape, new CANNON.Vec3(0, bodyHeight/2, 0), quat);  
+  
+      const sphereShape = new CANNON.Sphere(coneRadius);
+      rocketBody.addShape(sphereShape, new CANNON.Vec3(0, bodyHeight + coneHeight/2, 0));
+  
+      rocketBody.position.copy(originPosition);
+      rocketBody.velocity.set(0,0,0);
+      rocketBody.angularVelocity.set(0,0,0);
+  
+      world.addBody(rocketBody);
+  
+      rocketMesh = new Group();
+  
+      const bodyGeometry = new CylinderGeometry(bodyRadius, bodyRadius, bodyHeight, 16);
+      const bodyMaterial = new MeshPhongMaterial({ color: 'red' });
+      const bodyMesh = new Mesh(bodyGeometry, bodyMaterial);
+      bodyMesh.position.y = bodyHeight / 2;
+      rocketMesh.add(bodyMesh);
+  
+      const coneGeometry = new ConeGeometry(coneRadius, coneHeight, 16);
+      const coneMaterial = new MeshPhongMaterial({ color: 'orange' });
+      const coneMesh = new Mesh(coneGeometry, coneMaterial);
+      coneMesh.position.y = bodyHeight + coneHeight / 2;
+      rocketMesh.add(coneMesh);
+  
+      scene.add(rocketMesh);
+  
+      maxHeight = 0;
+      maxHeightSpan.textContent = '0';
+      rangeSpan.textContent = '0';
+      launched = true;
+      landed = false;
+      landTime = 0;
+  
+      setRocketInitialDirection();
+  
+      const speed = parseFloat(this.speed);
+      const angleXY = parseFloat(this.angleXY) * Math.PI/180;
+      const angleZ = parseFloat(this.angleZ) * Math.PI/180;
+  
+      const vx = speed * Math.cos(angleXY) * Math.cos(angleZ);
+      const vy = speed * Math.sin(angleXY);
+      const vz = speed * Math.cos(angleXY) * Math.sin(angleZ);
+  
+      rocketBody.velocity.set(vx, vy, vz);
     }
-    velx() {
-      return this.speed * Math.cos(this.angleXY) * Math.cos(this.angleZ);
+    setRocketInitialDirection() {
+      const angleXY = parseFloat(angleXYInput.value) * Math.PI/180;
+      const angleZ = parseFloat(angleZInput.value) * Math.PI/180;
+      
+      const fromDir = new Vector3(0, 1, 0);
+      const targetDir = new Vector3(
+        Math.cos(angleXY) * Math.cos(angleZ),
+        Math.sin(angleXY),
+        Math.cos(angleXY) * Math.sin(angleZ)
+      ).normalize();
+      
+      const quat = new Quaternion().setFromUnitVectors(fromDir, targetDir);
+      
+      if(rocketMesh) {
+        rocketMesh.quaternion.copy(quat);
+      }
     }
-    get vy() {
-      return this.vely()
-    }
-    vely() {
-      return this.speed * Math.sin(this.angleXY);
-    }
-    get vz() {
-      return this.velz()
-    }
-    velz() {
-      return this.speed * Math.cos(this.angleXY) * Math.sin(this.angleZ);
-    }
-  };
-
-  a = new rocket1(speedInput.value, angleXYInput.value, angleZInput.value, launchBtn, maxHeightSpan, rangeSpan)
-
-  const Cd = 0.75;
-  const rho = 1.225;
-  const area = 0.01;
-  const mass = 0.1;
-
+    
+    animate() {
+      const mass = 0.1;
+      requestAnimationFrame(animate);
+  
+      if (rocketBody && launched) {
+        if (!landed) {
+          applyForces();
+          world.step(1/60);
+  
+          rocketMesh.position.copy(rocketBody.position);
+          updateRocketRotation();
+  
+          // 카메라 부드럽게 로켓 뒤쪽 위를 따라감
+          const desiredCamPos = new Vector3(
+            rocketBody.position.x + 10,
+            rocketBody.position.y + 5,
+            rocketBody.position.z + 10
+          );
+          camera.position.lerp(desiredCamPos, 0.05);
+          camera.lookAt(rocketMesh.position);
+  
+          // 최고 높이 갱신
+          if (rocketBody.position.y > maxHeight) {
+            maxHeight = rocketBody.position.y;
+            maxHeightSpan.textContent = maxHeight.toFixed(2);
+          }
+  
+          else {
+            isMaxheight = true;
+            // console.log(rocketBody.position.y);
+            // console.log("12");
+          }
+  
+          // 땅 닿은 최초 위치 기록
+          if (rocketBody.position.y <= 1.3 && !touchedGround && isMaxheight) {
+            touchedGround = true;
+            landed = true;
+            firstTouchPosition = rocketMesh.position.clone();
+            // console.log("landed")
+            const markerGeometry = new THREE.SphereGeometry(0.2, 32); // 반지름 0.2, 세그먼트 32
+            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 빨간색
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(rocketBody.position.x, 0.2, rocketBody.position.z); // 원하는 위치로 설정
+            scene.add(marker);
+          }
+  
+          // 착륙 감지: 땅(높이 0.2m) 닿으면 멈추고 고정
+          if (rocketBody.position.y <= 1.3 && landed && launched && isMaxheight) {
+            landTime = performance.now();
+  
+            rocketBody.velocity.set(0, 0, 0);
+            rocketBody.angularVelocity.set(0, 0, 0);
+            rocketBody.position.y = 1.6; // 착륙 고정 높이 0.2m
+            // console.log("finished")
+            rocketBody.type = CANNON.Body.KINEMATIC;
+            rocketBody.updateMassProperties();
+  
+            // 최초 착륙 위치 기준으로 거리 계산
+            const dist = firstTouchPosition
+              ? Math.sqrt(firstTouchPosition.x*firstTouchPosition.x + firstTouchPosition.z*firstTouchPosition.z)
+              : 0;
+            rangeSpan.textContent = dist.toFixed(2);
+            return;
+          }
+          // - 
+        } else {
+          // 착륙 후 1초 지난 뒤 원점으로 복귀 시작
+          const now = performance.now();
+          if (now - landTime > 500) {
+            rocketMesh.position.lerp(originPosition, 0.1);
+            rocketBody.position.copy(rocketMesh.position);
+  
+            // 카메라도 원점 뒤쪽 위 위치로 부드럽게 이동
+            const desiredCamPos = new Vector3(
+              rocketMesh.position.x + 10,
+              rocketMesh.position.y + 5,
+              rocketMesh.position.z + 10
+            );
+            camera.position.lerp(desiredCamPos, 0.05);
+            camera.lookAt(rocketMesh.position);
+  
+            setRocketInitialDirection();
+  
+            if (rocketMesh.position.distanceTo(originPosition) < 0.1) {
+              rocketBody.type = CANNON.Body.DYNAMIC;
+              rocketBody.mass = mass;
+              rocketBody.updateMassProperties();
+  
+              launched = false;
+              landed = true;
+              isMaxheight = false;
+              trajectoryGeometry.setDrawRange(0, 0);
+              trajectoryIndex = 0;
+              firstTouchPosition = null;
+              touchedGround = false;
+            }
+          } else {
+            // 착륙 후 1초 대기하는 동안 카메라 로켓 따라가게 유지
+            const desiredCamPos = new Vector3(
+              rocketBody.position.x + 10,
+              rocketBody.position.y + 5,
+              rocketBody.position.z + 10
+            );
+            camera.position.lerp(desiredCamPos, 0.05);
+            camera.lookAt(rocketMesh.position);
+          }
+        }
+      } else {
+        // 발사 전 고정 카메라 위치
+        camera.position.set(0, 20, 40);
+        camera.lookAt(new Vector3(0, 0, 0));
+      }
+  
+      renderer.render(scene, camera);
+    };
+  
+  }
   let maxHeight = 0;
   let launched = false;
   let landed = false;
   let landTime = 0;
   let isMaxheight = false;
-
+  
   const originPosition = new Vector3(0, 0.25, 0);
-
-  function createRocket() {
-    if (rocketBody) {
-      world.removeBody(rocketBody);
-      scene.remove(rocketMesh);
-      rocketBody = null;
-      rocketMesh = null;
-
-      trajectoryGeometry.setDrawRange(0, 0);
-      trajectoryIndex = 0;
-      firstTouchPosition = null;
-      touchedGround = false;
-    }
-
-
-    const bodyHeight = 1.0;
-    const bodyRadius = 0.15;
-    const coneHeight = 0.4;
-    const coneRadius = bodyRadius;
-
-    rocketBody = new CANNON.Body({
-      mass: mass,
-      linearDamping: 0,
-      angularDamping: 0,
-      type: CANNON.Body.DYNAMIC
-    });
-
-    rocketBody.inertia.set(0.01, 0.02, 0.01);
-    rocketBody.invInertia.set(
-      1/rocketBody.inertia.x,
-      1/rocketBody.inertia.y,
-      1/rocketBody.inertia.z
-    );
-
-    const cylinderShape = new CANNON.Cylinder(bodyRadius, bodyRadius, bodyHeight, 16);
-    const quat = new CANNON.Quaternion();
-    quat.setFromEuler(Math.PI / 2, 0, 0);
-    rocketBody.addShape(cylinderShape, new CANNON.Vec3(0, bodyHeight/2, 0), quat);
-
-    const sphereShape = new CANNON.Sphere(coneRadius);
-    rocketBody.addShape(sphereShape, new CANNON.Vec3(0, bodyHeight + coneHeight/2, 0));
-
-    rocketBody.position.copy(originPosition);
-    rocketBody.velocity.set(0,0,0);
-    rocketBody.angularVelocity.set(0,0,0);
-
-    world.addBody(rocketBody);
-
-    rocketMesh = new Group();
-
-    const bodyGeometry = new CylinderGeometry(bodyRadius, bodyRadius, bodyHeight, 16);
-    const bodyMaterial = new MeshPhongMaterial({ color: 'red' });
-    const bodyMesh = new Mesh(bodyGeometry, bodyMaterial);
-    bodyMesh.position.y = bodyHeight / 2;
-    rocketMesh.add(bodyMesh);
-
-    const coneGeometry = new ConeGeometry(coneRadius, coneHeight, 16);
-    const coneMaterial = new MeshPhongMaterial({ color: 'orange' });
-    const coneMesh = new Mesh(coneGeometry, coneMaterial);
-    coneMesh.position.y = bodyHeight + coneHeight / 2;
-    rocketMesh.add(coneMesh);
-
-    scene.add(rocketMesh);
-
-    maxHeight = 0;
-    maxHeightSpan.textContent = '0';
-    rangeSpan.textContent = '0';
-    launched = true;
-    landed = false;
-    landTime = 0;
-
-    setRocketInitialDirection();
-
-    const speed = parseFloat(speedInput.value);
-    const angleXY = parseFloat(angleXYInput.value) * Math.PI/180;
-    const angleZ = parseFloat(angleZInput.value) * Math.PI/180;
-
-    const vx = speed * Math.cos(angleXY) * Math.cos(angleZ);
-    const vy = speed * Math.sin(angleXY);
-    const vz = speed * Math.cos(angleXY) * Math.sin(angleZ);
-
-    rocketBody.velocity.set(vx, vy, vz);
-  }
-
-  function setRocketInitialDirection() {
-    const angleXY = parseFloat(angleXYInput.value) * Math.PI/180;
-    const angleZ = parseFloat(angleZInput.value) * Math.PI/180;
-
-    const fromDir = new Vector3(0, 1, 0);
-    const targetDir = new Vector3(
-      Math.cos(angleXY) * Math.cos(angleZ),
-      Math.sin(angleXY),
-      Math.cos(angleXY) * Math.sin(angleZ)
-    ).normalize();
-
-    const quat = new Quaternion().setFromUnitVectors(fromDir, targetDir);
-
-    if(rocketMesh) {
-      rocketMesh.quaternion.copy(quat);
-    }
-  }
-
-  const windDirInput = document.getElementById('windDir1');
-  const windSpeedInput = document.getElementById('windSpeed1')
-
   function applyForces() {
+    const Cd = 0.75;
+    const rho = 1.225;
+    const area = 0.01;
+    const windDirInput = document.getElementById('windDir1');
+    const windSpeedInput = document.getElementById('windSpeed1')
     if (!rocketBody) return;
-
+  
     const windSpeed = parseFloat(windSpeedInput.value);
     const windDirDeg = parseFloat(windDirInput.value);
     if (isNaN(windSpeed) || isNaN(windDirDeg)) return;
@@ -324,122 +402,45 @@
     }
   }
 
-  function animate() {
-    requestAnimationFrame(animate);
+  const li = []
 
-    if (rocketBody && launched) {
-      if (!landed) {
-        applyForces();
-        world.step(1/60);
+  function setMarker() {
+    const markerGeometry = new THREE.SphereGeometry(0.1, 16);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const arr = [];
+    const line = setInterval(() => {
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+      if (!landed){
+        marker.position.set(rocketBody.position.x, rocketBody.position.y, rocketBody.position.z);
+        scene.add(marker);
 
-        rocketMesh.position.copy(rocketBody.position);
-        updateRocketRotation();
+        arr.push(marker);
+      };
+      if (landed) {
+        // scene.remove(marker);
+        // for(let i = 0; i < arr.length; i++){
+        //   scene.remove(arr[i]);
+        // }
 
-        // 카메라 부드럽게 로켓 뒤쪽 위를 따라감
-        const desiredCamPos = new Vector3(
-          rocketBody.position.x + 10,
-          rocketBody.position.y + 5,
-          rocketBody.position.z + 10
-        );
-        camera.position.lerp(desiredCamPos, 0.05);
-        camera.lookAt(rocketMesh.position);
+        li.push(arr);
+        // console.log(1)
+        clearInterval(line);  
+      };
+    }, 10);
+  };
 
-        // 최고 높이 갱신
-        if (rocketBody.position.y > maxHeight) {
-          maxHeight = rocketBody.position.y;
-          maxHeightSpan.textContent = maxHeight.toFixed(2);
-        }
+  launchBtn.addEventListener('click', () => {
+    rocket.createRocket;
+    setMarker();
+  });
 
-        else {
-          isMaxheight = true;
-          console.log(rocketBody.position.y);
-          console.log("12");
-        }
-
-        // 땅 닿은 최초 위치 기록
-        if (rocketBody.position.y <= 1.3 && !touchedGround && isMaxheight) {
-          touchedGround = true;
-          landed = true;
-          firstTouchPosition = rocketMesh.position.clone();
-          console.log("landed")
-          const markerGeometry = new THREE.SphereGeometry(0.2, 32); // 반지름 0.2, 세그먼트 32
-          const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 빨간색
-          const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-          marker.position.set(rocketBody.position.x, 0.2, rocketBody.position.z); // 원하는 위치로 설정
-          scene.add(marker);
-        }
-
-        // 착륙 감지: 땅(높이 0.2m) 닿으면 멈추고 고정
-        if (rocketBody.position.y <= 1.3 && landed && launched && isMaxheight) {
-          landTime = performance.now();
-
-          rocketBody.velocity.set(0, 0, 0);
-          rocketBody.angularVelocity.set(0, 0, 0);
-          rocketBody.position.y = 1.6; // 착륙 고정 높이 0.2m
-          console.log("finished")
-          rocketBody.type = CANNON.Body.KINEMATIC;
-          rocketBody.updateMassProperties();
-
-          // 최초 착륙 위치 기준으로 거리 계산
-          const dist = firstTouchPosition
-            ? Math.sqrt(firstTouchPosition.x*firstTouchPosition.x + firstTouchPosition.z*firstTouchPosition.z)
-            : 0;
-          rangeSpan.textContent = dist.toFixed(2);
-          return;
-        }
-        // - 
-      } else {
-        // 착륙 후 1초 지난 뒤 원점으로 복귀 시작
-        const now = performance.now();
-        if (now - landTime > 500) {
-          rocketMesh.position.lerp(originPosition, 0.1);
-          rocketBody.position.copy(rocketMesh.position);
-
-          // 카메라도 원점 뒤쪽 위 위치로 부드럽게 이동
-          const desiredCamPos = new Vector3(
-            rocketMesh.position.x + 10,
-            rocketMesh.position.y + 5,
-            rocketMesh.position.z + 10
-          );
-          camera.position.lerp(desiredCamPos, 0.05);
-          camera.lookAt(rocketMesh.position);
-
-          setRocketInitialDirection();
-
-          if (rocketMesh.position.distanceTo(originPosition) < 0.1) {
-            rocketBody.type = CANNON.Body.DYNAMIC;
-            rocketBody.mass = mass;
-            rocketBody.updateMassProperties();
-
-            launched = false;
-            landed = true;
-            isMaxheight = false;
-            trajectoryGeometry.setDrawRange(0, 0);
-            trajectoryIndex = 0;
-            firstTouchPosition = null;
-            touchedGround = false;
-          }
-        } else {
-          // 착륙 후 1초 대기하는 동안 카메라 로켓 따라가게 유지
-          const desiredCamPos = new Vector3(
-            rocketBody.position.x + 10,
-            rocketBody.position.y + 5,
-            rocketBody.position.z + 10
-          );
-          camera.position.lerp(desiredCamPos, 0.05);
-          camera.lookAt(rocketMesh.position);
-        }
+  clearBtn.addEventListener('click', () => {
+    for(let i = 0; i < li.length; i++){
+      for(let j = 0; j < li[i].length; j++){
+        scene.remove(li[i][j]);
       }
-    } else {
-      // 발사 전 고정 카메라 위치
-      camera.position.set(0, 20, 40);
-      camera.lookAt(new Vector3(0, 0, 0));
     }
-
-    renderer.render(scene, camera);
-  }
-
-  launchBtn.addEventListener('click', createRocket);
+  });
 
   angleXYInput.addEventListener('input', () => {
     if (!launched) setRocketInitialDirection();
@@ -454,9 +455,8 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
+  rocket.animate;
 
-  animate();
-  
   document.querySelectorAll('#windButtons1 button').forEach(btn => {
     btn.addEventListener('click', () => {
       windDirInput.value = btn.dataset.angle;
