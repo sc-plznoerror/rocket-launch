@@ -6,7 +6,7 @@
     Vector3, Quaternion, Sprite, SpriteMaterial, Texture, CanvasTexture
   } = THREE;
 
-  const world = new CANNON.World();
+  const world = new CANNON.World(); // world를 선언했으니 월드를 바꿀 수 있지 않을까?
   world.gravity.set(0, -9.8, 0);
   world.broadphase = new CANNON.NaiveBroadphase();
   world.solver.iterations = 10;
@@ -323,6 +323,19 @@
       rocketMesh.quaternion.slerp(targetQuat, 0.1);
     }
   }
+
+  const line = setInterval(() => {
+    if (!landed){
+      const markerGeometry = new THREE.SphereGeometry(0.1, 16);
+        const markerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+        marker.position.set(rocketBody.position.x, rocketBody.position.y, rocketBody.position.z);
+        scene.add(marker);
+    }
+    // if (landed) {
+    //   clearInterval(line);
+    // };
+  }, 10);
 
   function animate() {
     requestAnimationFrame(animate);
