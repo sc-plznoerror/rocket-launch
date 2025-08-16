@@ -456,7 +456,7 @@
 
 
   animate();
-
+  
   document.querySelectorAll('#windButtons1 button').forEach(btn => {
     btn.addEventListener('click', () => {
       windDirInput.value = btn.dataset.angle;
