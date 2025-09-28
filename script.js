@@ -1,6 +1,6 @@
 (() => {
-  const OPENCAGE_API_KEY = '2bd1923c563e46e8a2ed899b7fd3f128';
-  const OPENWEATHER_API_KEY = '5f368635c5c63428bd32ef71baf00025';
+  const OPENCAGE_API_KEY = '2bd1923c563e46e8a2ed899b7fd3f128';       // ← OpenCage API 키
+  const OPENWEATHER_API_KEY = '5f368635c5c63428bd32ef71baf00025'; // ← OpenWeather API 키
 
   const {
     Scene, PerspectiveCamera, WebGLRenderer, Color, AmbientLight, DirectionalLight,
@@ -82,6 +82,7 @@
       const coneShape = new CANNON.Sphere(0.15);
       this.rocketBody.addShape(coneShape, new CANNON.Vec3(0, 1.2, 0));
       this.rocketBody.position.copy(this.originPosition);
+      world.add(this.rocketBody)
 
       this.rocketMesh = new Group();
       const bodyMesh = new Mesh(new CylinderGeometry(0.15, 0.15, 1, 16), new MeshPhongMaterial({ color: this.bodyColor }));
@@ -124,7 +125,6 @@
       );
       const relVel = this.rocketBody.velocity.vsub(windVec);
       const relSpeed = relVel.length();
-      if (relSpeed === 0) return;
       const dragMag = 0.5 * this.Cd * this.rho * this.area * relSpeed * relSpeed;
       const drag = relVel.scale(-dragMag / relSpeed);
       this.rocketBody.applyForce(drag, this.rocketBody.position.vadd(new CANNON.Vec3(0,0.6,0)));
@@ -139,6 +139,7 @@
         this.rocketMesh.quaternion.slerp(new Quaternion().setFromUnitVectors(new Vector3(0,1,0), dir), 0.1);
       }
 
+      // 최고 높이 갱신
       if (!this.maxHeight) this.maxHeight = 0;
       if (this.rocketBody.position.y > this.maxHeight) {
         this.maxHeight = this.rocketBody.position.y;
@@ -148,6 +149,7 @@
       }
       else this.isMaxheight = true;
 
+      // 착륙 감지
       if (this.rocketBody.position.y <= 1.4 && this.isMaxheight) {
         if (this.rocketMesh.parent) scene.remove(this.rocketMesh);
         if (world.bodies.includes(this.rocketBody)) world.removeBody(this.rocketBody);
@@ -158,10 +160,10 @@
         const index = rockets.indexOf(this);
         if(index > -1) rockets.splice(index,1);
 
-        const markerGeometry = new THREE.SphereGeometry(0.2, 32);
-        const markerMaterial = new THREE.MeshBasicMaterial({ color: this.bodyColor});
+        const markerGeometry = new THREE.SphereGeometry(0.2, 32); // 반지름 0.2, 세그먼트 32
+        const markerMaterial = new THREE.MeshBasicMaterial({ color: this.bodyColor}); // 빨간색
         const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-        marker.position.set(this.rocketBody.position.x, 0.2, this.rocketBody.position.z);
+        marker.position.set(this.rocketBody.position.x, 0.2, this.rocketBody.position.z); // 원하는 위치로 설정
         scene.add(marker);
         launchBtn1.disabled = false;
         launchBtn2.disabled = false;
