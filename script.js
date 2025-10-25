@@ -188,7 +188,7 @@
       }
     }
     setMarker() {
-      const markerGeometry = new THREE.SphereGeometry(0.15, 16);
+      const markerGeometry = new THREE.SphereGeometry(0.1, 16);
       const markerMaterial = new THREE.MeshBasicMaterial({ color: this.bodyColor});
       const arr = [];
       const line = setInterval(() => {
